@@ -1,18 +1,16 @@
-from openai import OpenAI
-from config.config import OPENAI_API_KEY, DEFAULT_MODEL
-
-client = OpenAI(api_key=OPENAI_API_KEY)
+# models/llm.py
+from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage, SystemMessage
+from config.config import GROQ_API_KEY, DEFAULT_MODEL
 
 def ask_llm(prompt):
     try:
-        response = client.chat.completions.create(
-            model=DEFAULT_MODEL,
-            messages=[
-                {"role": "system", "content": "You are a financial analyst AI that explains and analyzes company financial statements."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-        return response.choices[0].message.content
+        chat = ChatGroq(api_key=GROQ_API_KEY, model=DEFAULT_MODEL)
+        messages = [
+            SystemMessage(content="You are a helpful financial analyst AI that explains and interprets balance sheets, profit/loss statements, and key company financials."),
+            HumanMessage(content=prompt)
+        ]
+        response = chat.invoke(messages)
+        return response.content
     except Exception as e:
-        return f"LLM Error: {str(e)}"
+        return f"Groq API Error: {str(e)}"
