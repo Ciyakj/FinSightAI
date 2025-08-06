@@ -4,3 +4,6 @@ langchain
 langchain_groq
 pandas
 scikit-learn
+beautifulsoup4
+requests
+
