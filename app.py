@@ -1,19 +1,49 @@
 import streamlit as st
-from utils.file_reader import load_financial_data
-from models.llm import ask_llm
-from utils.rag_retriever import FinancialRAG
+import pandas as pd
+from models.llm import call_llm
+from models.embeddings import get_embedding
+from utils.file_reader import read_code_files
+from utils.rag_retriever import CodeRAGRetriever
+from utils.web_search import live_search
+from utils.web_scraper import fetch_moneycontrol_financials
 
-st.set_page_config(page_title="FinSight AI")
-st.title("💼 FinSight AI – Financial Statement Analyzer")
+st.set_page_config(page_title="CodeExplain AI")
+st.title("🧠 CodeExplain AI – Understand Legacy Code")
 
-uploaded_file = st.file_uploader("Upload a financial statement (CSV or Excel)", type=["csv", "xlsx"])
-question = st.text_input("Ask a question about the financials:")
+mode = st.selectbox("🔧 Choose response mode", ["concise", "detailed"])
+model = st.selectbox("🤖 Choose LLM model", ["groq", "gemini", "deepseek"])
 
-if uploaded_file and question:
-    data_chunks = load_financial_data(uploaded_file)
-    retriever = FinancialRAG()
-    retriever.add_chunks(data_chunks)
-    context = retriever.query(question)
-    full_prompt = f"Context:\n{context}\n\nQuestion: {question}"
-    answer = ask_llm(full_prompt)
-    st.markdown(f"### 🧠 Response:\n{answer}")
+uploaded_files = st.file_uploader("📁 Upload code files", type=["py", "js", "java", "txt", "md"], accept_multiple_files=True)
+url_input = st.text_input("📊 Enter Moneycontrol Financials URL")
+question = st.text_input("💬 Ask something about the code or financials:")
+
+if uploaded_files and question:
+    st.info("📦 Processing uploaded files...")
+    content = read_code_files(uploaded_files)
+    chunks = content.split("\n\n")
+    retriever = CodeRAGRetriever()
+    retriever.add_chunks(chunks)
+    context = "\n\n".join(retriever.query(question))
+
+    prompt = f"Here is some code context:\n{context}\n\nUser question: {question}"
+    response = call_llm(prompt)
+
+    if "[Error" in response or "LLM Error" in response:
+        st.warning("⚠️ LLM failed. Using web search instead.")
+        response = live_search(question)
+
+    st.markdown(f"### 🧠 Response:\n{response}")
+
+elif url_input and question:
+    st.info("🔍 Scraping financial data from Moneycontrol...")
+    dfs = fetch_moneycontrol_financials(url_input)
+    if isinstance(dfs, list):
+        context = "\n\n".join([df.to_string(index=False) for df in dfs])
+        prompt = f"Here is financial data scraped from {url_input}:\n\n{context}\n\nUser question: {question}"
+        response = call_llm(prompt)
+        st.markdown(f"### 🧠 Response:\n{response}")
+    else:
+        st.warning(f"❌ Error: {dfs}")
+
+else:
+    st.info("⬆️ Upload files or enter a financial URL and ask a question to get started.")
