@@ -6,4 +6,6 @@ pandas
 scikit-learn
 beautifulsoup4
 requests
+html5lib
+
 
