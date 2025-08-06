@@ -1,4 +1,6 @@
 streamlit
 openai
-scikit-learn
+langchain
+langchain_groq
 pandas
+scikit-learn
