@@ -1,9 +1,8 @@
-# models/llm.py
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config import GROQ_API_KEY, DEFAULT_MODEL
 
-def ask_llm(prompt):
+def call_llm(prompt):
     try:
         chat = ChatGroq(api_key=GROQ_API_KEY, model=DEFAULT_MODEL)
         messages = [
