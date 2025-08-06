@@ -1,9 +1,8 @@
-import pandas as pd
+# utils/file_reader.py
 
-def load_financial_data(uploaded_file):
-    if uploaded_file.name.endswith('.csv'):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
-    chunks = [f"{col}: {val}" for col, val in df.iloc[0].items()]
-    return chunks
+def read_code_files(uploaded_files):
+    content = ""
+    for file in uploaded_files:
+        file_content = file.read().decode("utf-8", errors="ignore")
+        content += file_content + "\n\n"
+    return content
