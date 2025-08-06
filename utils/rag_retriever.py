@@ -1,6 +1,6 @@
 # utils/rag_retriever.py
 
-class CodeRAGRetriever:
+class FinanceRAGRetriever:
     def __init__(self):
         self.chunks = []
 
