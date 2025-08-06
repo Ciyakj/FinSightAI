@@ -1,4 +1,4 @@
 import os
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DEFAULT_MODEL = "gpt-3.5-turbo"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+DEFAULT_MODEL = "llama3-70b-8192"
