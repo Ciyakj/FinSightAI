@@ -1,33 +1,40 @@
 import streamlit as st
 import pandas as pd
 from models.llm import call_llm
-from utils.web_search import live_search
 from utils.web_scraper import fetch_moneycontrol_financials
+from utils.rag_retriever import CodeRAGRetriever
 
-# 🔧 App configuration
 st.set_page_config(page_title="FinSight AI")
-st.title("📊 FinSight AI – Analyze Financial Reports Instantly")
+st.title("\U0001F4CA FinSight AI – Analyze Financial Reports Instantly")
 
-# 🔘 User options
-mode = st.selectbox("🔧 Choose response mode", ["concise", "detailed"])
-model = st.selectbox("🤖 Choose LLM model", ["groq", "gemini", "deepseek"])
+mode = st.selectbox("\U0001F527 Choose response mode", ["concise", "detailed"])
+model = st.selectbox("\U0001F916 Choose LLM model", ["groq", "gemini", "deepseek"])
 
-# 🔗 User input
-url_input = st.text_input("📊 Enter Moneycontrol Financials URL")
-question = st.text_input("💬 Ask something about the financials:")
+url_input = st.text_input("\U0001F4CA Enter Moneycontrol Financials URL")
+question = st.text_input("\U0001F4AC Ask something about the financials:")
 
-# 🧠 Logic for processing financial data
 if url_input and question:
-    st.info("🔍 Scraping financial data from Moneycontrol...")
+    st.info("\U0001F50D Scraping financial data from Moneycontrol...")
     dfs = fetch_moneycontrol_financials(url_input)
 
     if isinstance(dfs, list):
-        context = "\n\n".join([df.to_string(index=False) for df in dfs])
-        prompt = f"You are a financial analyst. Given this financial data from {url_input}:\n\n{context}\n\nAnswer the user's question:\n{question}"
+        context_chunks = []
+        for df in dfs:
+            if isinstance(df, pd.DataFrame):
+                context_chunks.append(df.to_string(index=False))
+
+        context_text = "\n\n".join(context_chunks)
+
+        # 🔄 Use RAG for retrieval
+        rag = CodeRAGRetriever()
+        rag.add_chunks(context_text.split("\n\n"))
+        relevant_context = "\n\n".join(rag.query(question))
+
+        prompt = f"Here is financial data context:\n{relevant_context}\n\nUser question: {question}"
         response = call_llm(prompt)
-        st.markdown(f"### 🧠 Response:\n{response}")
+
+        st.markdown(f"### \U0001F4DA Response:\n{response}")
     else:
         st.warning(f"❌ Error: {dfs}")
-
 else:
     st.info("📥 Please enter a Moneycontrol financial URL and your question to get started.")
